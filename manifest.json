@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "DOM Fetch from Popup",
+  "version": "1.0",
+  "permissions": ["activeTab", "webNavigation"],
+  "host_permissions": ["http://127.0.0.1:23124/*"],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+ "content_scripts": [
+    {
+      "js": ["scripts/content.js"],
+      "matches": [
+        "https://opac.regesta-imperii.de/*",
+        "https://developer.chrome.com/docs/webstore/*"
+      ]
+    }
+  ]
+}
