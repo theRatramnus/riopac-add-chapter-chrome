@@ -43,7 +43,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       bookInfo = message.payload.bookInfo;
       console.log("Saved book info: " + JSON.stringify(bookInfo));
       console.log("Adding chapter with ID: " + message.payload.chapterID);
-      addChapter(chapterInfo, bookInfo, sendResponse);
+      addChapter(chapterInfo, bookInfo, sendResponse, message, sender);
       break;
   }
 
@@ -128,12 +128,16 @@ function backToChapter(id) {
   })();
 }
 
-function addChapter(chapterInfo, bookInfo, sendResponse) {
-  const url = bookInfo?.url || "";
-  const sessionID = null;
-  const title = chapterInfo?.title || "Unbekannt";
+function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
+  // optional: aus message übernehmen (z.B. von content script)
+  const url = message.url ?? sender?.tab?.url ?? "";
+  const title = message.title ?? "Unbenannt";
 
-  chrome.tabs.create({ url: "https://www.zotero.org/download/" });
+  // sessionID: Connector verwendet sie, um mehrere Requests zu einer Speicherung zu bündeln
+  const sessionID =
+    (globalThis.crypto?.randomUUID && crypto.randomUUID()) ||
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
   console.log(
     "Adding chapter with ID: " +
       (chapterInfo?.id || "<none>") +
@@ -141,18 +145,78 @@ function addChapter(chapterInfo, bookInfo, sendResponse) {
       (bookInfo?.id || "<none>"),
   );
 
+  // const payload = {
+  //   sessionID,
+  //   // optional, aber oft sinnvoll, weil Zotero intern damit u.a. Proxy/Referrer koppelt
+  //   uri: url,
+  //   items: [
+  //     {
+  //       ...chapterInfo,
+  //     },
+  //   ],
+  // };
+
   const payload = {
     sessionID,
+    // optional, aber oft sinnvoll, weil Zotero intern damit u.a. Proxy/Referrer koppelt
     uri: url,
     items: [
       {
-        itemType: "webpage",
-        title: "SUCCESSSSSSS",
-        url,
-        accessDate: new Date().toISOString(),
+        id: "http://zotero.org/groups/497580/items/VAPWBVQ6",
+        type: "chapter",
+        "container-title":
+          "Zwischen Römerzeit und Karl dem Grossen: die frühmittelalterlichen Grabfunde aus Worms und Rheinhessen im Museum der Stadt Worms im Andreasstift",
+        page: "91-95",
+        "publisher-place": "Lindenberg",
+        source: "COinS",
+        title: "Worms und seine Kirchen",
+        author: [
+          {
+            family: "Grünewald",
+            given: "Mathilde",
+          },
+        ],
+        editor: [
+          {
+            family: "Grünewald",
+            given: "Mathilde",
+          },
+          {
+            family: "Wieczorek",
+            given: "Alfried",
+          },
+        ],
+        issued: {
+          "date-parts": [["2009"]],
+        },
       },
     ],
   };
+
+  function createHTML(content) {
+    // Erzeuge eine kleine HTML-Seite, die das payload als formatiertes JSON anzeigt
+    const escapeHtml = (s) =>
+      String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    const html =
+      "<!doctype html><meta charset='utf-8'><title>Payload</title>" +
+      "<style>body{font-family:monospace;padding:1rem}</style>" +
+      "<pre>" +
+      escapeHtml(content) +
+      "</pre>";
+
+    return html;
+  }
+
+  // Öffne einen neuen Tab mit der generierten Data-URL
+  chrome.tabs.create({
+    url:
+      "data:text/html;charset=utf-8," +
+      encodeURIComponent(createHTML(JSON.stringify(payload, null, 2))),
+  });
 
   fetch("http://127.0.0.1:23124/connector/saveItems", {
     method: "POST",
@@ -165,6 +229,16 @@ function addChapter(chapterInfo, bookInfo, sendResponse) {
     .then(async (res) => {
       const text = await res.text().catch(() => "");
       if (!res.ok) {
+        chrome.tabs.create({
+          url:
+            "data:text/html;charset=utf-8," +
+            encodeURIComponent(
+              createHTML(
+                `HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ""}`,
+              ),
+            ),
+        });
+
         throw new Error(
           `HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ""}`,
         );

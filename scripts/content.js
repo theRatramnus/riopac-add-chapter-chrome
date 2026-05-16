@@ -84,16 +84,15 @@ function getBookInfo(doc) {
 
   function fixTitle(tag, code) {
     const fetchedContent = findContent(doc, tag, code) ?? "";
-    return Typography.fixTitle(fetchedContent)
+    return changeTitle(fetchedContent);
   }
 
   const bookInfo = {
-    bookTitle: fixTitle("245", "a"),
     place: findContent(doc, "264", "a").trim() ?? "",
     series: findContent(doc, "490", "a").split(" / ")[0].trim() ?? "",
     volume: findContent(doc, "490", "a").split(" / ")[1]?.trim() ?? "",
     url: findContent(doc, "502", "a").trim() ?? "",
-    editors: creators ?? "",
+    editor: creators ?? "",
   };
 
   chrome.runtime.sendMessage({
@@ -151,44 +150,44 @@ function getChapterInfo(doc) {
 
   const csl = {
     id,
-    type: containerTitle ? "chapter" : "book",
+    itemType: containerTitle ? "chapter" : "book",
     title: cleanTitle(title),
   };
 
-  const authors = parseAuthors(authorRaw);
-  if (authors.length > 0) {
-    csl.author = authors;
-  }
+//   const authors = parseAuthors(authorRaw);
+//   if (authors.length > 0) {
+//     csl.author = authors;
+//   }
 
-  const year = parseYear(yearRaw);
-  if (year) {
-    csl.issued = {
-      "date-parts": [[year]],
-    };
-  }
+//   const year = parseYear(yearRaw);
+//   if (year) {
+//     csl.issued = {
+//       "date-parts": [[year]],
+//     };
+//   }
 
-  if (containerTitle) {
-    csl["container-title"] = cleanTitle(containerTitle);
-  }
+//   if (containerTitle) {
+//     csl["container-title"] = cleanTitle(containerTitle);
+//   }
 
-  const page = parsePages(pagesRaw);
-  if (page) {
-    csl.page = page;
-  }
+//   const page = parsePages(pagesRaw);
+//   if (page) {
+//     csl.page = page;
+//   }
 
-  if (language) {
-    csl.language = mapMarcLanguageToBcp47(language);
-  }
+//   if (language) {
+//     csl.language = mapMarcLanguageToBcp47(language);
+//   }
 
-  if (keywordRaw) {
-    csl.keyword = keywordRaw;
-  }
+//   if (keywordRaw) {
+//     csl.keyword = keywordRaw;
+//   }
 
-  // Nicht-standardisierte Zusatzinfo; citeproc ignoriert unbekannte Felder.
-  // Kann praktisch sein, wenn du die MARC-Herkunft behalten willst.
-  if (genreRaw) {
-    csl.note = `MARC 516: ${genreRaw}`;
-  }
+//   // Nicht-standardisierte Zusatzinfo; citeproc ignoriert unbekannte Felder.
+//   // Kann praktisch sein, wenn du die MARC-Herkunft behalten willst.
+//   if (genreRaw) {
+//     csl.note = `MARC 516: ${genreRaw}`;
+//   }
 
   console.log("Extracted chapter info:", csl);
 
@@ -286,4 +285,49 @@ function mapMarcLanguageToBcp47(code) {
   };
 
   return map[code] || code;
+}
+
+function replaceDashesWithEnDash(input) {
+    const regex = /([0-9])\s*-\s*([0-9])/g;
+    const replaced = input.replace(regex, '$1–$2'); // Note: Use an en dash character here
+
+    return replaced;
+}
+
+function replaceSpacesAroundHyphenWithEnDash(input) {
+    const regex = /\s-\s/g;
+    const replaced = input.replace(regex, ' – '); // En dash character surrounded by spaces
+
+    return replaced;
+}
+
+function replaceLastEWithSupE(input) {
+    const regex = /([\s(-][IVX][A-Z]*)e([\s-)])/;
+    const replaced = input.replace(regex, '$1<sup>e</sup>$2');
+
+    return replaced;
+}
+
+  function replaceSemicolonWithPeriod(input) {
+    const regex = /\s;\s/g;
+    const replaced = input.replace(regex, '. ');
+
+    return replaced;
+}
+
+ function removeColonAfterQuestionmark(input) {
+    const regex = /\?:/;
+    const replaced = input.replace(regex, '?');
+
+    return replaced;
+}
+function removeParenthesesContent(input) {
+    const regex = /\(.*\)/g;
+    const replaced = input.replace(regex, '');
+
+    return replaced;
+}
+
+function changeTitle(input){
+    return replaceSpacesAroundHyphenWithEnDash(replaceDashesWithEnDash(replaceLastEWithSupE(replaceLastEWithSupE((replaceSemicolonWithPeriod(removeColonAfterQuestionmark(input)))))))
 }
