@@ -129,15 +129,6 @@ function backToChapter(id) {
 }
 
 function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
-  // optional: aus message übernehmen (z.B. von content script)
-  const url = message.url ?? sender?.tab?.url ?? "";
-  const title = message.title ?? "Unbenannt";
-
-  // sessionID: Connector verwendet sie, um mehrere Requests zu einer Speicherung zu bündeln
-  const sessionID =
-    (globalThis.crypto?.randomUUID && crypto.randomUUID()) ||
-    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
   console.log(
     "Adding chapter with ID: " +
       (chapterInfo?.id || "<none>") +
@@ -145,105 +136,152 @@ function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
       (bookInfo?.id || "<none>"),
   );
 
-  // const payload = {
-  //   sessionID,
-  //   // optional, aber oft sinnvoll, weil Zotero intern damit u.a. Proxy/Referrer koppelt
-  //   uri: url,
-  //   items: [
-  //     {
-  //       ...chapterInfo,
-  //     },
-  //   ],
-  // };
-
+  const sessionID = createSessionID();
+  const zoteroItem = convertToZoteroItem(chapterInfo, bookInfo, message, sender);
   const payload = {
     sessionID,
-    // optional, aber oft sinnvoll, weil Zotero intern damit u.a. Proxy/Referrer koppelt
-    uri: url,
-    items: [
-      {
-        id: "http://zotero.org/groups/497580/items/VAPWBVQ6",
-        type: "chapter",
-        "container-title":
-          "Zwischen Römerzeit und Karl dem Grossen: die frühmittelalterlichen Grabfunde aus Worms und Rheinhessen im Museum der Stadt Worms im Andreasstift",
-        page: "91-95",
-        "publisher-place": "Lindenberg",
-        source: "COinS",
-        title: "Worms und seine Kirchen",
-        author: [
-          {
-            family: "Grünewald",
-            given: "Mathilde",
-          },
-        ],
-        editor: [
-          {
-            family: "Grünewald",
-            given: "Mathilde",
-          },
-          {
-            family: "Wieczorek",
-            given: "Alfried",
-          },
-        ],
-        issued: {
-          "date-parts": [["2009"]],
-        },
-      },
-    ],
+    uri: zoteroItem.url || "",
+    items: [zoteroItem],
   };
 
-  function createHTML(content) {
-    // Erzeuge eine kleine HTML-Seite, die das payload als formatiertes JSON anzeigt
-    const escapeHtml = (s) =>
-      String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+  postToZoteroSaveItems(payload)
+    .then((result) => {
+      sendResponse({
+        ok: true,
+        status: result.status,
+        endpoint: result.endpoint,
+        sessionID,
+        data: result.text,
+      });
+    })
+    .catch((error) => {
+      sendResponse({
+        ok: false,
+        sessionID,
+        error: error.message,
+      });
+    });
+}
 
-    const html =
-      "<!doctype html><meta charset='utf-8'><title>Payload</title>" +
-      "<style>body{font-family:monospace;padding:1rem}</style>" +
-      "<pre>" +
-      escapeHtml(content) +
-      "</pre>";
-
-    return html;
+function createSessionID() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
   }
 
-  // Öffne einen neuen Tab mit der generierten Data-URL
-  chrome.tabs.create({
-    url:
-      "data:text/html;charset=utf-8," +
-      encodeURIComponent(createHTML(JSON.stringify(payload, null, 2))),
-  });
+  if (globalThis.crypto?.getRandomValues) {
+    const randomBytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(randomBytes);
+    const randomHex = Array.from(randomBytes, (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
+    return `${Date.now()}-${randomHex}`;
+  }
 
-  fetch("http://127.0.0.1:23124/connector/saveItems", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Zotero-Connector-API-Version": "3",
-    },
-    body: JSON.stringify(payload),
-  })
-    .then(async (res) => {
-      const text = await res.text().catch(() => "");
-      if (!res.ok) {
-        chrome.tabs.create({
-          url:
-            "data:text/html;charset=utf-8," +
-            encodeURIComponent(
-              createHTML(
-                `HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ""}`,
-              ),
-            ),
-        });
+  return `${Date.now()}-fallback-session`;
+}
 
-        throw new Error(
-          `HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ""}`,
+function cslPeopleToZoteroCreators(people, creatorType) {
+  if (!Array.isArray(people)) return [];
+
+  return people
+    .map((person) => ({
+      creatorType,
+      firstName: person?.given || "",
+      lastName: person?.family || "",
+    }))
+    .filter((creator) => creator.firstName || creator.lastName);
+}
+
+function getItemURL(chapterInfo, message, sender) {
+  if (chapterInfo?.id) {
+    return `https://opac.regesta-imperii.de/id/${chapterInfo.id}`;
+  }
+
+  return message.url ?? sender?.tab?.url ?? "";
+}
+
+function convertToZoteroItem(chapterInfo, bookInfo, message, sender) {
+  const url = getItemURL(chapterInfo, message, sender);
+  const hasContainerTitle = Boolean(chapterInfo?.["container-title"]);
+  const item = {
+    itemType: hasContainerTitle ? "bookSection" : "webpage",
+    title: chapterInfo?.title || message.title || "Unbenannt",
+    url,
+  };
+
+  const authors = cslPeopleToZoteroCreators(chapterInfo?.author, "author");
+  const editors = Array.isArray(bookInfo?.editor) ? bookInfo.editor : [];
+  const creators = [...authors, ...editors];
+  if (creators.length > 0) {
+    item.creators = creators;
+  }
+
+  const year = chapterInfo?.issued?.["date-parts"]?.[0]?.[0];
+  if (year) {
+    item.date = String(year);
+  }
+
+  if (hasContainerTitle) {
+    item.bookTitle = chapterInfo["container-title"];
+  }
+
+  if (chapterInfo?.page) {
+    item.pages = chapterInfo.page;
+  }
+
+  if (bookInfo?.place) {
+    item.place = bookInfo.place;
+  }
+
+  if (bookInfo?.series) {
+    item.series = bookInfo.series;
+  }
+
+  if (bookInfo?.volume) {
+    item.volume = bookInfo.volume;
+  }
+
+  if (chapterInfo?.language) {
+    item.language = chapterInfo.language;
+  }
+
+  return item;
+}
+
+async function postToZoteroSaveItems(payload) {
+  const baseURLs = ["http://127.0.0.1:23124", "http://127.0.0.1:23119"];
+  const errors = [];
+
+  for (const baseURL of baseURLs) {
+    try {
+      const response = await fetch(`${baseURL}/connector/saveItems`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Zotero-Connector-API-Version": "3",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const text = await response.text().catch(() => "");
+      if (!response.ok) {
+        errors.push(
+          `${baseURL} -> HTTP ${response.status} ${response.statusText}${text ? `: ${text}` : ""}`,
         );
+        continue;
       }
-      sendResponse({ ok: true, status: res.status, data: text });
-    })
-    .catch((error) => sendResponse({ ok: false, error: error.message }));
+
+      return {
+        endpoint: `${baseURL}/connector/saveItems`,
+        status: response.status,
+        text,
+      };
+    } catch (error) {
+      errors.push(`${baseURL} -> ${error.message}`);
+    }
+  }
+
+  throw new Error(
+    `Konnte Zotero /connector/saveItems nicht erreichen oder speichern. ${errors.join(" | ")}`,
+  );
 }

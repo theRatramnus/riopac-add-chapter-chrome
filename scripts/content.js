@@ -75,11 +75,20 @@ const getBookLink = (doc) => {
 
 function getBookInfo(doc) {
   const editorsString = findContent(doc, "700", "a");
-  const editors = editorsString.split("; ");
+  const editors = editorsString
+    ? editorsString
+        .split("; ")
+        .map((editor) => editor.trim())
+        .filter(Boolean)
+    : [];
 
   const creators = editors.map((editor) => {
     const split = editor.split(", ");
-    return { firstName: split[1], lastName: split[0], creatorType: "editor" };
+    return {
+      firstName: split[1] || "",
+      lastName: split[0] || "",
+      creatorType: "editor",
+    };
   });
 
   function fixTitle(tag, code) {
@@ -154,40 +163,40 @@ function getChapterInfo(doc) {
     title: cleanTitle(title),
   };
 
-//   const authors = parseAuthors(authorRaw);
-//   if (authors.length > 0) {
-//     csl.author = authors;
-//   }
+  const authors = parseAuthors(authorRaw);
+  if (authors.length > 0) {
+    csl.author = authors;
+  }
 
-//   const year = parseYear(yearRaw);
-//   if (year) {
-//     csl.issued = {
-//       "date-parts": [[year]],
-//     };
-//   }
+  const year = parseYear(yearRaw);
+  if (year) {
+    csl.issued = {
+      "date-parts": [[year]],
+    };
+  }
 
-//   if (containerTitle) {
-//     csl["container-title"] = cleanTitle(containerTitle);
-//   }
+  if (containerTitle) {
+    csl["container-title"] = cleanTitle(containerTitle);
+  }
 
-//   const page = parsePages(pagesRaw);
-//   if (page) {
-//     csl.page = page;
-//   }
+  const page = parsePages(pagesRaw);
+  if (page) {
+    csl.page = page;
+  }
 
-//   if (language) {
-//     csl.language = mapMarcLanguageToBcp47(language);
-//   }
+  if (language) {
+    csl.language = mapMarcLanguageToBcp47(language);
+  }
 
-//   if (keywordRaw) {
-//     csl.keyword = keywordRaw;
-//   }
+  if (keywordRaw) {
+    csl.keyword = keywordRaw;
+  }
 
-//   // Nicht-standardisierte Zusatzinfo; citeproc ignoriert unbekannte Felder.
-//   // Kann praktisch sein, wenn du die MARC-Herkunft behalten willst.
-//   if (genreRaw) {
-//     csl.note = `MARC 516: ${genreRaw}`;
-//   }
+  // Nicht-standardisierte Zusatzinfo; citeproc ignoriert unbekannte Felder.
+  // Kann praktisch sein, wenn du die MARC-Herkunft behalten willst.
+  if (genreRaw) {
+    csl.note = `MARC 516: ${genreRaw}`;
+  }
 
   console.log("Extracted chapter info:", csl);
 
