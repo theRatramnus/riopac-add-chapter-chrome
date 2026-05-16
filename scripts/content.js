@@ -84,9 +84,7 @@ function getBookInfo(doc) {
 
   function fixTitle(tag, code) {
     const fetchedContent = findContent(doc, tag, code) ?? "";
-    return getPref("enhancedTypography")
-      ? Typography.fixTitle(fetchedContent)
-      : fetchedContent;
+    return Typography.fixTitle(fetchedContent)
   }
 
   const bookInfo = {
