@@ -1,38 +1,30 @@
-# riopac-add-chapter
+# riopac-add-chapter-chrome
 
-Dieses Chrome-Plugin extrahiert Metadaten aus RI OPAC und speichert sie in Zotero Desktop.
+This Chrome extension imports book chapters with full information (including the editors and publisher's place) from RI OPAC and saves them to Zotero Desktop.
 
-## Zotero-Connector-Anbindung
+(This was vibecoded in a weekend, but could be useful still.)
 
-Das Plugin sendet ein `POST` an:
+## Installation
 
-- `http://127.0.0.1:23124/connector/saveItems`
-- Fallback: `http://127.0.0.1:23119/connector/saveItems`
+The process of getting the extension published to the Chrome Web Store seemed like a lot of trouble for a very temporary solution.
+You can install the extension by downloading the zip file and loading the folder it extracts to as an [unpacked extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de#load-unpacked). This requires you to use Chrome in development mode. Proceed at your own risk!
 
-mit Headern:
+## Usage - please read!
 
-- `Content-Type: application/json`
-- `X-Zotero-Connector-API-Version: 3`
+When on a RI Opac page with describing a chapter, you can click on the extension's icon. 
+This will use your tab to gather the required information. 
+It will load new websites in the active tab. This is normal behaviour, don't worry.
+Once it's it will close the current tab, opening a new tab that allows you to search in the RI Opac again.
 
-Der gesendete Payload ist **Zotero-Item-JSON** (Connector-Format), nicht CSL-JSON.  
-Interne Kapitel-Metadaten werden vor dem Senden in ein Zotero-Item (`bookSection` oder `webpage`) umgewandelt.
+The extension is a substitute for the Zotero Connector extension when importing chapters.
+However, the extension ONLY works for chapters.
 
-## Smoke-Test (manuell gegen Zotero Desktop)
+You will need both the Zotero Connector as well as this plugin when trying to import chapters.
 
-```bash
-curl -i -X POST http://127.0.0.1:23124/connector/saveItems \
-  -H "Content-Type: application/json" \
-  -H "X-Zotero-Connector-API-Version: 3" \
-  -d '{
-    "sessionID": "smoke-test-1",
-    "items": [
-      {
-        "itemType": "webpage",
-        "title": "Smoke Test",
-        "url": "https://example.org"
-      }
-    ]
-  }'
-```
+Importing chapters with the Zotero Connector however will lead to incomplete information, only use it for the other content types.
 
-Erwartung: HTTP `201` und ein neues Item in Zotero.
+
+## Thanks
+
+- to @akliner for the great [template repository](https://github.com/aklinker1/vite-plugin-web-extension)!
+- ChatGPT, GitHub Copilot and Gemini 🙃
