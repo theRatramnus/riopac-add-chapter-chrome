@@ -1,5 +1,9 @@
 # riopac-add-chapter-chrome
 
+>[!IMPORTANT]
+>If you're using https://github.com/theRatramnus/RIOPACAddChapter, please deactivate it in Zotero's settings. It leads to confilcts with this extension.
+>In general, the Zotero extension is the better choice, but it doesn't work right now.
+
 This Chrome extension imports book chapters with full information (including the editors and publisher's place) from RI OPAC and saves them to Zotero Desktop.
 
 (This was vibecoded in a weekend, but could be useful still.)
