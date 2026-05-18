@@ -7,7 +7,7 @@ This Chrome extension imports book chapters with full information (including the
 ## Installation
 
 The process of getting the extension published to the Chrome Web Store seemed like a lot of trouble for a very temporary solution.
-You can install the extension by downloading the zip file and loading the folder it extracts to as an [unpacked extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de#load-unpacked). This requires you to use Chrome in development mode. Proceed at your own risk!
+You can install the extension by downloading the [zip file](https://github.com/theRatramnus/riopac-add-chapter-chrome/releases/download/v1.0/dist.zip) and loading the folder it extracts to as an [unpacked extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de#load-unpacked). This requires you to use Chrome in development mode. Proceed at your own risk!
 
 ## Usage - please read!
 
