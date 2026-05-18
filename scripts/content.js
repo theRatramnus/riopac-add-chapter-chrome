@@ -275,10 +275,7 @@ function parsePages(value) {
 }
 
 function cleanTitle(value) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .replace(/[/.]\s*$/, "")
-    .trim();
+  return changeTitle(value);
 }
 
 function mapMarcLanguageToBcp47(code) {

@@ -153,6 +153,14 @@ function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
         sessionID,
         data: result.text,
       });
+      chrome.tabs.create({ url: chrome.runtime.getURL("success.html") });
+      
+      const currentTabId = sender?.tab?.id;
+      if (typeof currentTabId === "number") {
+        chrome.tabs.remove(currentTabId).catch(() => {});
+      }
+
+      
     })
     .catch((error) => {
       sendResponse({
@@ -161,6 +169,8 @@ function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
         error: error.message,
       });
     });
+  
+  
 }
 
 function createSessionID() {
