@@ -291,7 +291,10 @@ async function postToZoteroSaveItems(payload) {
     }
   }
 
+  chrome.tabs.create({ url: chrome.runtime.getURL("failiure.html") });
+
   throw new Error(
     `Konnte Zotero /connector/saveItems nicht erreichen oder speichern. ${errors.join(" | ")}`,
   );
+
 }

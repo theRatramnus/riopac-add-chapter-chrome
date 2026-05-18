@@ -23,6 +23,8 @@ You will need both the Zotero Connector as well as this plugin when trying to im
 
 Importing chapters with the Zotero Connector however will lead to incomplete information, only use it for the other content types.
 
+Remember to have Zotero running. Otherwise the extension will not work!
+
 
 ## Thanks
 
