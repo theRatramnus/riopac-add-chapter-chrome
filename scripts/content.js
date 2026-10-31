@@ -403,9 +403,23 @@ async function onAddButtonClick(link, button) {
   }
 }
 
+// TODO: replace with your Ko-fi page
+const KOFI_URL = "https://ko-fi.com/ludwigpatzold";
+
 function setButtonResult(button, ok) {
   button.disabled = ok;
   button.textContent = ok ? "Added ✓" : "Fehler – erneut versuchen";
+  if (ok && !button.parentElement.querySelector(".riopac-kofi")) {
+    const kofi = document.createElement("a");
+    kofi.className = "riopac-kofi";
+    kofi.href = KOFI_URL;
+    kofi.target = "_blank";
+    kofi.rel = "noopener";
+    kofi.textContent = "☕ Support me on Ko-fi";
+    kofi.style.cssText =
+      "display:inline-block;padding:2px 10px;background:#29abe0;color:#fff;border-radius:3px;font-size:90%;text-decoration:none;";
+    button.after(kofi);
+  }
 }
 
 function addButtonsToListEntries(doc) {
@@ -413,14 +427,25 @@ function addButtonsToListEntries(doc) {
     const cell = link.closest("td");
     if (!cell || cell.querySelector(".riopac-add-button")) return;
 
+    // Thin separator line below each entry, like a plain list
+    const entry = link.closest("table");
+    if (entry) {
+      entry.style.cssText +=
+        ";width:100%;border-bottom:1px solid #adacac;padding-bottom:8px;margin-bottom:4px;";
+    }
+
     const button = document.createElement("button");
     button.type = "button";
     button.className = "riopac-add-button";
-    button.textContent = "Add";
+    button.textContent = "+ Add";
     button.addEventListener("click", () => onAddButtonClick(link, button));
     button.style.cssText =
-      "display:block;margin-top:6px;padding:2px 10px;background:#a51d2d;color:#fff;border:1px solid #7f1520;border-radius:3px;font:inherit;font-size:90%;cursor:pointer;";
-    cell.appendChild(button);
+      "padding:2px 10px;background:#a51d2d;color:#fff;border:1px solid #7f1520;border-radius:3px;font:inherit;font-size:90%;cursor:pointer;margin-bottom:6px;";
+    const row = document.createElement("div");
+    row.style.cssText =
+      "display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;";
+    row.appendChild(button);
+    cell.appendChild(row);
   });
 }
 
