@@ -1,0 +1,46 @@
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd" data-zotero-connector-injected="true">
+<responseDate>2026-10-31T16:08:42Z</responseDate>
+<request verb="GetRecord" metadataPrefix="oai_marc" identifier="3242120">https://opac.regesta-imperii.de/api/oai</request>
+<GetRecord>
+<record>
+<header>
+<identifier>3242120</identifier>
+<datestamp>2026-05-12</datestamp>
+<setSpec>EuropaeischeGeschichte</setSpec>
+</header>
+<metadata>
+<marc:record xmlns:marc="http://www.loc.gov/MARC21/slim">
+<marc:leader>00000cad#a22000002ub4500</marc:leader>
+<marc:controlfield tag="001">3242120</marc:controlfield>
+<marc:datafield tag="035" ind1=" " ind2=" ">
+<marc:subfield code="a">(DE-Mz3)3242120</marc:subfield>
+</marc:datafield>
+<marc:datafield tag="041" ind1="0" ind2=" ">
+<marc:subfield code="a">ger</marc:subfield>
+</marc:datafield>
+<marc:datafield tag="100" ind1="1" ind2=" ">
+<marc:subfield code="a">Patzold, Steffen</marc:subfield>
+</marc:datafield>
+<marc:datafield tag="245" ind1="1" ind2=" ">
+<marc:subfield code="a">
+Raum und Politik: Ein französisch-deutsches Projekt
+</marc:subfield>
+</marc:datafield>
+<marc:datafield tag="264" ind1=" " ind2="1">
+<marc:subfield code="c">2026</marc:subfield>
+</marc:datafield>
+<marc:datafield tag="516" ind1=" " ind2=" ">
+<marc:subfield code="a">7</marc:subfield>
+</marc:datafield>
+<marc:datafield tag="650" ind1=" " ind2="4">
+<marc:subfield code="a">Politische Geschichte</marc:subfield>
+</marc:datafield>
+<marc:datafield tag="773" ind1="0" ind2="8">
+<marc:subfield code="t">Études Geneviève Bührer-Thierry</marc:subfield>
+<marc:subfield code="g">S. 1-9</marc:subfield>
+</marc:datafield>
+</marc:record>
+</metadata>
+</record>
+</GetRecord>
+</OAI-PMH>
