@@ -339,3 +339,20 @@ function removeParenthesesContent(input) {
 function changeTitle(input){
     return replaceSpacesAroundHyphenWithEnDash(replaceDashesWithEnDash(replaceLastEWithSupE(replaceLastEWithSupE((replaceSemicolonWithPeriod(removeColonAfterQuestionmark(input)))))))
 }
+
+function addButtonsToListEntries(doc) {
+  doc.querySelectorAll("a.linktitel").forEach((link) => {
+    const cell = link.closest("td");
+    if (!cell || cell.querySelector(".riopac-add-button")) return;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "riopac-add-button";
+    button.textContent = "Add";
+    button.style.cssText =
+      "display:block;margin-top:6px;padding:2px 10px;background:#a51d2d;color:#fff;border:1px solid #7f1520;border-radius:3px;font:inherit;font-size:90%;cursor:pointer;";
+    cell.appendChild(button);
+  });
+}
+
+addButtonsToListEntries(document);
