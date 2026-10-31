@@ -2,8 +2,17 @@ import { convertMARC21ToZoteroItem } from "../zotero-translate/index.js";
 
 console.log("content script!!!");
 
+// Buttons waiting for a background chapter job, keyed by record id
+const pendingButtons = new Map();
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
+    case "ADD_RESULT": {
+      const button = pendingButtons.get(message.id);
+      pendingButtons.delete(message.id);
+      if (button) setButtonResult(button, message.ok);
+      break;
+    }
     case "START":
       start(document);
       sendResponse({ ok: true });
@@ -373,21 +382,30 @@ async function onAddButtonClick(link, button) {
   if (!pk) return;
 
   const type = link.closest("table")?.querySelector("img")?.alt;
+  button.disabled = true;
+  button.textContent = "…";
+
   if (type === "Buchbeitrag") {
-    startChapter(pk);
+    pendingButtons.set(pk, button);
+    chrome.runtime.sendMessage({
+      type: "LOAD_CHAPTER_BACKGROUND",
+      payload: { chapterID: pk },
+    });
     return;
   }
 
-  button.disabled = true;
-  button.textContent = "…";
   try {
     await addItemViaMarc(pk);
-    button.textContent = "Added ✓";
+    setButtonResult(button, true);
   } catch (error) {
     console.error(error);
-    button.disabled = false;
-    button.textContent = "Fehler – erneut versuchen";
+    setButtonResult(button, false);
   }
+}
+
+function setButtonResult(button, ok) {
+  button.disabled = ok;
+  button.textContent = ok ? "Added ✓" : "Fehler – erneut versuchen";
 }
 
 function addButtonsToListEntries(doc) {

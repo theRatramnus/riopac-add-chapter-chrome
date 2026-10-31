@@ -2,6 +2,8 @@
 // Module-level state (persist across messages)
 let chapterInfo = null;
 let bookInfo = null;
+// Background jobs started from the result list, keyed by the id of their tab
+const backgroundJobs = new Map();
 
 function addOnceWebNavListener(tabId, urlContains, handler) {
   const listener = async (details) => {
@@ -20,7 +22,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case "LOAD_CHAPTER":
       console.log("Loading chapter with ID: " + message.payload.chapterID);
-      loadMARC21(message.payload.chapterID, sendResponse, "GET_CHAPTER_INFO");
+      loadMARC21(
+        message.payload.chapterID,
+        sendResponse,
+        "GET_CHAPTER_INFO",
+        sender.tab.id,
+      );
+      break;
+    case "LOAD_CHAPTER_BACKGROUND":
+      startBackgroundChapter(
+        message.payload.chapterID,
+        sender.tab.id,
+        sendResponse,
+      );
       break;
     case "BACK_TO_CHAPTER":
       chapterInfo = message.payload.chapterInfo;
@@ -28,16 +42,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log(
         "Going back to chapter with ID: " + message.payload.chapterInfo.id,
       );
-      backToChapter(message.payload.chapterInfo.id);
+      backToChapter(message.payload.chapterInfo.id, sender.tab.id);
       sendResponse({ ok: true });
       break;
     case "FIND_BOOK":
-      findBook(message.payload, sendResponse);
+      findBook(message.payload, sendResponse, sender.tab.id);
       console.log(message.payload.bookLink);
       break;
     case "LOAD_BOOK":
       console.log("Loading book with ID: " + message.payload.bookID);
-      loadMARC21(message.payload.bookID, sendResponse, "GET_BOOK_INFO");
+      loadMARC21(
+        message.payload.bookID,
+        sendResponse,
+        "GET_BOOK_INFO",
+        sender.tab.id,
+      );
       break;
     case "SAVE_ITEM":
       saveItem(message.payload.item, sendResponse);
@@ -53,79 +72,81 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true; // sendResponse async
 });
 
-function findBook(payload, sendResponse) {
+function findBook(payload, sendResponse, tabId) {
   console.log("Finding book with link: " + payload.bookLink);
 
   (async () => {
     sendResponse({ ok: true });
 
     console.log("Updating tab with new URL...");
-    await chrome.tabs.update({
+    await chrome.tabs.update(tabId, {
       url: "https://opac.regesta-imperii.de/lang_de/" + payload.bookLink,
     });
 
     console.log("Tab updated, now trying to get book id...");
 
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-
-    addOnceWebNavListener(tab.id, payload.bookLink, async () => {
+    addOnceWebNavListener(tabId, payload.bookLink, async () => {
       console.log("document loaded");
-      await chrome.tabs.sendMessage(tab.id, { type: "GET_BOOK_ID" });
+      await chrome.tabs.sendMessage(tabId, { type: "GET_BOOK_ID" });
       console.log("Book found and tab updated!");
     });
   })();
 }
 
-function loadMARC21(id, sendResponse, followUpMessageType) {
+function marc21URL(id) {
+  return (
+    "https://opac.regesta-imperii.de/api/oai?verb=GetRecord&metadataPrefix=oai_marc&identifier=" +
+    id
+  );
+}
+
+// Opens the chapter flow in its own inactive tab so the result list stays put
+function startBackgroundChapter(id, originTabId, sendResponse) {
+  (async () => {
+    sendResponse({ ok: true });
+
+    const tab = await chrome.tabs.create({ url: marc21URL(id), active: false });
+    backgroundJobs.set(tab.id, { originTabId, id });
+
+    addOnceWebNavListener(tab.id, id, async () => {
+      await chrome.tabs.sendMessage(tab.id, { type: "GET_CHAPTER_INFO" });
+    });
+  })();
+}
+
+function loadMARC21(id, sendResponse, followUpMessageType, tabId) {
   console.log("Loading book with ID: " + id);
 
   (async () => {
     sendResponse({ ok: true });
 
     console.log("Updating tab with new URL...");
-    await chrome.tabs.update({
-      url:
-        "https://opac.regesta-imperii.de/api/oai?verb=GetRecord&metadataPrefix=oai_marc&identifier=" +
-        id,
-    });
+    await chrome.tabs.update(tabId, { url: marc21URL(id) });
 
     console.log("Tab updated, now trying to get info...");
 
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-
-    addOnceWebNavListener(tab.id, id, async () => {
+    addOnceWebNavListener(tabId, id, async () => {
       console.log("document loaded");
-      await chrome.tabs.sendMessage(tab.id, { type: followUpMessageType });
+      await chrome.tabs.sendMessage(tabId, { type: followUpMessageType });
       console.log("MARC21 found and tab updated!");
     });
   })();
 }
 
-function backToChapter(id) {
+function backToChapter(id, tabId) {
   console.log("Going back to chapter with ID: " + id);
 
   (async () => {
     console.log("Updating tab with new URL...");
-    await chrome.tabs.update({
+    await chrome.tabs.update(tabId, {
       url: "https://opac.regesta-imperii.de/id/" + id,
     });
 
     console.log("Tab updated, now trying to get book link...");
 
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-
-    addOnceWebNavListener(tab.id, id, async () => {
+    addOnceWebNavListener(tabId, id, async () => {
       console.log("document loaded");
-      await chrome.tabs.sendMessage(tab.id, { type: "GET_BOOK_LINK" });
+      await chrome.tabs.sendMessage(tabId, { type: "GET_BOOK_LINK" });
       console.log("Book link found and tab updated!");
     });
   })();
@@ -146,6 +167,19 @@ function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
     uri: zoteroItem.url || "",
     items: [zoteroItem],
   };
+
+  const job = backgroundJobs.get(sender?.tab?.id);
+  if (job) {
+    backgroundJobs.delete(sender.tab.id);
+    postToZoteroSaveItems(payload)
+      .then(() => notifyOrigin(job, true))
+      .catch(() => notifyOrigin(job, false))
+      .finally(() => {
+        chrome.tabs.remove(sender.tab.id).catch(() => {});
+        sendResponse({ ok: true });
+      });
+    return;
+  }
 
   postToZoteroSaveItems(payload)
     .then((result) => {
@@ -181,6 +215,12 @@ function saveItem(item, sendResponse) {
   postToZoteroSaveItems({ sessionID, uri: item.url || "", items: [item] })
     .then(() => sendResponse({ ok: true }))
     .catch((error) => sendResponse({ ok: false, error: error.message }));
+}
+
+function notifyOrigin(job, ok) {
+  chrome.tabs
+    .sendMessage(job.originTabId, { type: "ADD_RESULT", id: job.id, ok })
+    .catch(() => {});
 }
 
 function createSessionID() {
