@@ -232,7 +232,7 @@ function convertToZoteroItem(chapterInfo, bookInfo, message, sender) {
   }
 
   if (hasContainerTitle) {
-    item.bookTitle = chapterInfo["container-title"];
+    item.bookTitle = bookInfo.title;
   }
 
   if (chapterInfo?.page) {

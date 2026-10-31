@@ -75,6 +75,7 @@ const getBookLink = (doc) => {
 
 function getBookInfo(doc) {
   const editorsString = findContent(doc, "700", "a");
+  const bookTitle = findContent(doc, "245", "a");
   const editors = editorsString
     ? editorsString
         .split("; ")
@@ -102,6 +103,7 @@ function getBookInfo(doc) {
     volume: findContent(doc, "490", "a").split(" / ")[1]?.trim() ?? "",
     url: findContent(doc, "502", "a").trim() ?? "",
     editor: creators ?? "",
+    title: bookTitle
   };
 
   chrome.runtime.sendMessage({
