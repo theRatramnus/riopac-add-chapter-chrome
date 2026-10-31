@@ -1,4 +1,5 @@
 import { convertMARC21ToZoteroItem } from "../zotero-translate/index.js";
+import { fixTitle } from "../typography";
 
 console.log("content script!!!");
 
@@ -129,18 +130,13 @@ function getBookInfo(doc) {
     };
   });
 
-  function fixTitle(tag, code) {
-    const fetchedContent = findContent(doc, tag, code) ?? "";
-    return changeTitle(fetchedContent);
-  }
-
   const bookInfo = {
     place: findContent(doc, "264", "a").trim() ?? "",
     series: findContent(doc, "490", "a").split(" / ")[0].trim() ?? "",
     volume: findContent(doc, "490", "a").split(" / ")[1]?.trim() ?? "",
     url: findContent(doc, "502", "a").trim() ?? "",
     editor: creators ?? "",
-    title: bookTitle
+    title: fixTitle(bookTitle ?? "")
   };
 
   chrome.runtime.sendMessage({
@@ -314,7 +310,7 @@ function parsePages(value) {
 }
 
 function cleanTitle(value) {
-  return changeTitle(value);
+  return fixTitle(value);
 }
 
 function mapMarcLanguageToBcp47(code) {
@@ -330,51 +326,6 @@ function mapMarcLanguageToBcp47(code) {
   };
 
   return map[code] || code;
-}
-
-function replaceDashesWithEnDash(input) {
-    const regex = /([0-9])\s*-\s*([0-9])/g;
-    const replaced = input.replace(regex, '$1–$2'); // Note: Use an en dash character here
-
-    return replaced;
-}
-
-function replaceSpacesAroundHyphenWithEnDash(input) {
-    const regex = /\s-\s/g;
-    const replaced = input.replace(regex, ' – '); // En dash character surrounded by spaces
-
-    return replaced;
-}
-
-function replaceLastEWithSupE(input) {
-    const regex = /([\s(-][IVX][A-Z]*)e([\s-)])/;
-    const replaced = input.replace(regex, '$1<sup>e</sup>$2');
-
-    return replaced;
-}
-
-  function replaceSemicolonWithPeriod(input) {
-    const regex = /\s;\s/g;
-    const replaced = input.replace(regex, '. ');
-
-    return replaced;
-}
-
- function removeColonAfterQuestionmark(input) {
-    const regex = /\?:/;
-    const replaced = input.replace(regex, '?');
-
-    return replaced;
-}
-function removeParenthesesContent(input) {
-    const regex = /\(.*\)/g;
-    const replaced = input.replace(regex, '');
-
-    return replaced;
-}
-
-function changeTitle(input){
-    return replaceSpacesAroundHyphenWithEnDash(replaceDashesWithEnDash(replaceLastEWithSupE(replaceLastEWithSupE((replaceSemicolonWithPeriod(removeColonAfterQuestionmark(input)))))))
 }
 
 async function onAddButtonClick(link, button) {
