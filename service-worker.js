@@ -39,6 +39,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log("Loading book with ID: " + message.payload.bookID);
       loadMARC21(message.payload.bookID, sendResponse, "GET_BOOK_INFO");
       break;
+    case "SAVE_ITEM":
+      saveItem(message.payload.item, sendResponse);
+      break;
     case "ADD_CHAPTER":
       bookInfo = message.payload.bookInfo;
       console.log("Saved book info: " + JSON.stringify(bookInfo));
@@ -171,6 +174,13 @@ function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
     });
   
   
+}
+
+function saveItem(item, sendResponse) {
+  const sessionID = createSessionID();
+  postToZoteroSaveItems({ sessionID, uri: item.url || "", items: [item] })
+    .then(() => sendResponse({ ok: true }))
+    .catch((error) => sendResponse({ ok: false, error: error.message }));
 }
 
 function createSessionID() {

@@ -1,3 +1,5 @@
+import { convertMARC21ToZoteroItem } from "../zotero-translate/index.js";
+
 console.log("content script!!!");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -40,12 +42,38 @@ function fetchID(doc) {
 
 function start(doc) {
   console.log("start content script");
+  startChapter(fetchID(doc));
+}
+
+function startChapter(chapterID) {
   chrome.runtime.sendMessage({
     type: "LOAD_CHAPTER",
     payload: {
-      chapterID: fetchID(doc),
+      chapterID,
     },
   });
+}
+
+// Generic items (everything except chapters): MARC21 -> Zotero translator
+async function addItemViaMarc(id) {
+  const response = await fetch(
+    "https://opac.regesta-imperii.de/api/oai?verb=GetRecord&metadataPrefix=oai_marc&identifier=" +
+      id,
+  );
+  if (!response.ok) throw new Error("HTTP " + response.status);
+
+  const xml = new DOMParser().parseFromString(
+    await response.text(),
+    "application/xml",
+  );
+  const item = await convertMARC21ToZoteroItem(xml);
+  item.url = "https://opac.regesta-imperii.de/id/" + id;
+
+  const result = await chrome.runtime.sendMessage({
+    type: "SAVE_ITEM",
+    payload: { item },
+  });
+  if (!result?.ok) throw new Error(result?.error || "Zotero save failed");
 }
 
 const getBookId = (doc) => {
@@ -340,6 +368,28 @@ function changeTitle(input){
     return replaceSpacesAroundHyphenWithEnDash(replaceDashesWithEnDash(replaceLastEWithSupE(replaceLastEWithSupE((replaceSemicolonWithPeriod(removeColonAfterQuestionmark(input)))))))
 }
 
+async function onAddButtonClick(link, button) {
+  const pk = link.getAttribute("href").match(/pk=(\d+)/)?.[1];
+  if (!pk) return;
+
+  const type = link.closest("table")?.querySelector("img")?.alt;
+  if (type === "Buchbeitrag") {
+    startChapter(pk);
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "…";
+  try {
+    await addItemViaMarc(pk);
+    button.textContent = "Added ✓";
+  } catch (error) {
+    console.error(error);
+    button.disabled = false;
+    button.textContent = "Fehler – erneut versuchen";
+  }
+}
+
 function addButtonsToListEntries(doc) {
   doc.querySelectorAll("a.linktitel").forEach((link) => {
     const cell = link.closest("td");
@@ -349,6 +399,7 @@ function addButtonsToListEntries(doc) {
     button.type = "button";
     button.className = "riopac-add-button";
     button.textContent = "Add";
+    button.addEventListener("click", () => onAddButtonClick(link, button));
     button.style.cssText =
       "display:block;margin-top:6px;padding:2px 10px;background:#a51d2d;color:#fff;border:1px solid #7f1520;border-radius:3px;font:inherit;font-size:90%;cursor:pointer;";
     cell.appendChild(button);
