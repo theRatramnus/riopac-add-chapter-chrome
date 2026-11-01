@@ -6,11 +6,9 @@
 
 This Chrome extension imports book chapters with full information (including the editors and publisher's place) from RI OPAC and saves them to Zotero Desktop.
 
-(This was vibecoded in a weekend, but could be useful still.)
 
 ## Installation
 
-The process of getting the extension published to the Chrome Web Store seemed like a lot of trouble for a very temporary solution.
 You can install the extension by downloading the [zip file](https://github.com/theRatramnus/riopac-add-chapter-chrome/releases/download/v1.0/dist.zip) and loading the folder it extracts to as an [unpacked extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de#load-unpacked). This requires you to use Chrome in development mode. Proceed at your own risk!
 
 ## Usage - please read!
@@ -29,8 +27,27 @@ Importing chapters with the Zotero Connector however will lead to incomplete inf
 
 Remember to have Zotero running. Otherwise the extension will not work!
 
-
 ## Thanks
 
 - to @akliner for the great [template repository](https://github.com/aklinker1/vite-plugin-web-extension)!
 - ChatGPT, GitHub Copilot and Gemini 🙃
+
+## Legal: Third-Party Software
+
+This project includes code from the [Zotero Translators]([https://github.com/OWNER/REPO](https://github.com/zotero/translators)).
+
+**Original license:** GNU Affero General Public License v3.0 (AGPL-3.0) (same as this repo)
+
+**Original copyright:** See copyright notices in the original source files.
+
+**Files used:**
+- `zotero-translate/MARC.gen.js`
+- `zotero-translate/MARCXML.gen.js`
+
+**Modifications:**
+
+The Zotero translators were wrapped into ES Modules by `zotero-translate/vendor.mjs`.
+
+The original license text is included in `LICENSE.md`.
+
+The original copyright and license notices are preserved.
