@@ -2,39 +2,44 @@
 
 >[!IMPORTANT]
 >If you're using https://github.com/theRatramnus/RIOPACAddChapter, please deactivate it in Zotero's settings. It leads to confilcts with this extension.
->In general, the Zotero extension is the better choice, but it doesn't work right now.
+>In general, the Zotero extension would be the right way, but it doesn't work right now, and it will probably not work again.
+>This is not my decision, the RI Opac prohibits using it's websites with a headless browser, which the extension used to gather the information.
 
 This Chrome extension imports book chapters with full information (including the editors and publisher's place) from RI OPAC and saves them to Zotero Desktop.
+It also modifies the RI Opac webpage to include Add-Buttons for all titles:
+
+<img width="942" height="517" src="https://github.com/user-attachments/assets/6231097e-a020-4c81-9a31-3f7fc9c06ba8" />
+
+If 
 
 
 ## Installation
 
-You can install the extension by downloading the [zip file](https://github.com/theRatramnus/riopac-add-chapter-chrome/releases/download/v1.0/dist.zip) and loading the folder it extracts to as an [unpacked extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de#load-unpacked). This requires you to use Chrome in development mode. Proceed at your own risk!
+You can install the extension by downloading the [zip file](https://github.com/theRatramnus/riopac-add-chapter-chrome/releases/latest) and loading the folder it extracts to as an [unpacked extension](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world?hl=de#load-unpacked). This requires you to use Chrome in development mode. Proceed at your own risk!
 
 ## Usage - please read!
 
-When on a RI Opac page with describing a chapter, you can click on the extension's icon. 
-This will use your tab to gather the required information. 
-It will load new websites in the active tab. This is normal behaviour, don't worry.
-Once it's it will close the current tab, opening a new tab that allows you to search in the RI Opac again.
+When on a RI Opac page you can click the "+ Add"-Button to save the item to Zotero Desktop. 
 
-The extension is a substitute for the Zotero Connector extension when importing chapters.
-However, the extension ONLY works for chapters.
+> [!IMPORTANT]
+> This will use your browser to gather the required information, in a new tab. 
+> It will load new websites in the new tab. This is normal behaviour, don't worry.
+> Once it's done it will close the new tab. You can just keep working as normal, just don't disrupt the generated tab.
 
-You will need both the Zotero Connector as well as this plugin when trying to import chapters.
-
-Importing chapters with the Zotero Connector however will lead to incomplete information, only use it for the other content types.
+You won't need the Zotero Connector anymore when importing information from the RI Opac.
 
 Remember to have Zotero running. Otherwise the extension will not work!
 
 ## Thanks
 
 - to @akliner for the great [template repository](https://github.com/aklinker1/vite-plugin-web-extension)!
-- ChatGPT, GitHub Copilot and Gemini 🙃
+- Zotero for the great open source platform :)
+- ChatGPT, GitHub Copilot, Gemini & Claude 🙃
+  
 
 ## Legal: Third-Party Software
 
-This project includes code from the [Zotero Translators]([https://github.com/OWNER/REPO](https://github.com/zotero/translators)).
+This project includes code from the [Zotero Translators](https://github.com/zotero/translators).
 
 **Original license:** GNU Affero General Public License v3.0 (AGPL-3.0) (same as this repo)
 
