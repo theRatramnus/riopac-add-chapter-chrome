@@ -10,8 +10,6 @@ It also modifies the RI Opac webpage to include Add-Buttons for all titles:
 
 <img width="942" height="517" src="https://github.com/user-attachments/assets/6231097e-a020-4c81-9a31-3f7fc9c06ba8" />
 
-If 
-
 
 ## Installation
 
