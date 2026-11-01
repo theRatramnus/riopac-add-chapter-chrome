@@ -1,7 +1,7 @@
 # riopac-add-chapter-chrome
 
 >[!IMPORTANT]
->If you're using https://github.com/theRatramnus/RIOPACAddChapter, please deactivate it in Zotero's settings. It leads to confilcts with this extension.
+>If you're using https://github.com/theRatramnus/RIOPACAddChapter, please deactivate it in Zotero's settings. It leads to conflicts with this extension.
 >In general, the Zotero extension would be the right way, but it doesn't work right now, and it will probably not work again.
 >This is not my decision, the RI Opac prohibits using it's websites with a headless browser, which the extension used to gather the information.
 
