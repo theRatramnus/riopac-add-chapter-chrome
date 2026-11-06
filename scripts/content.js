@@ -1,5 +1,6 @@
 import { convertMARC21ToZoteroItem } from "../zotero-translate/index.js";
 import { fixTitle } from "../typography";
+import { fixMarc } from "./fix-marc.js";
 
 console.log("content script!!!");
 
@@ -78,6 +79,8 @@ async function addItemViaMarc(id) {
   );
   const item = await convertMARC21ToZoteroItem(xml);
   item.url = "https://opac.regesta-imperii.de/id/" + id;
+
+  fixMarc(item);
 
   const result = await chrome.runtime.sendMessage({
     type: "SAVE_ITEM",
