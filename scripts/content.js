@@ -80,7 +80,9 @@ async function addItemViaMarc(id) {
   const item = await convertMARC21ToZoteroItem(xml);
   item.url = "https://opac.regesta-imperii.de/id/" + id;
 
-  fixMarc(item);
+  fixMarc(item, xml);
+
+  console.log("Prepared MARC item for Zotero:", item);
 
   const result = await chrome.runtime.sendMessage({
     type: "SAVE_ITEM",
@@ -150,7 +152,7 @@ function getBookInfo(doc) {
   });
 }
 
-function findContent(doc, tag, code) {
+export function findContent(doc, tag, code) {
   const namespaces = {
     marc: "http://www.loc.gov/MARC21/slim",
   };
