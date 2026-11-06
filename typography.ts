@@ -40,6 +40,13 @@ export function removeParenthesesContent(input: string): string {
     return replaced;
 }
 
+function removeTrailingDots(input: string): string {
+    const regex = /\.$/;
+    const replaced = input.replace(regex, '');
+
+    return replaced;
+}
+
 export function fixTitle(input: string): string {
-    return replaceSpacesAroundHyphenWithEnDash(replaceDashesWithEnDash(replaceLastEWithSupE(replaceLastEWithSupE((replaceSemicolonWithPeriod(removeColonAfterQuestionmark(input)))))))
+    return removeTrailingDots(replaceSpacesAroundHyphenWithEnDash(replaceDashesWithEnDash(replaceLastEWithSupE(replaceLastEWithSupE((replaceSemicolonWithPeriod(removeColonAfterQuestionmark(input))))))))
 }

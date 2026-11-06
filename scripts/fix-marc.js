@@ -1,6 +1,9 @@
-import {findContent} from "./content.js";
+import { findContent } from "./content.js";
+import {fixTitle} from "../typography.ts";
 
 export function fixMarc(item, xml) {
+    item.title = fixTitle(item.title);
+
     remapItemType(item);
 
     fixVolumeInSeries(item);
