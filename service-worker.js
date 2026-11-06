@@ -162,6 +162,7 @@ function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
 
   const sessionID = createSessionID();
   const zoteroItem = convertToZoteroItem(chapterInfo, bookInfo, message, sender);
+  fixHistorianInName(zoteroItem);
   const payload = {
     sessionID,
     uri: zoteroItem.url || "",
@@ -210,7 +211,26 @@ function addChapter(chapterInfo, bookInfo, sendResponse, message, sender) {
   
 }
 
+function fixHistorianInName(item) {
+  if (item.creators) {
+    item.creators = item.creators.map((creator) => {
+      if (creator.lastName && creator.lastName.includes("(")) {
+        creator.lastName = creator.lastName
+          .replace(/\s*\([^)]*\)\s*$/, "")
+          .trim();
+      }
+      if (creator.firstName && creator.firstName.includes("(")) {
+        creator.firstName = creator.firstName
+          .replace(/\s*\([^)]*\)\s*$/, "")
+          .trim();
+      }
+      return creator;
+    });
+  }
+}
+
 function saveItem(item, sendResponse) {
+  fixHistorianInName(item);
   const sessionID = createSessionID();
   postToZoteroSaveItems({ sessionID, uri: item.url || "", items: [item] })
     .then(() => sendResponse({ ok: true }))
